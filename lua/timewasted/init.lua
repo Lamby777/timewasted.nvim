@@ -75,6 +75,11 @@ function M.read_log()
 	end
 end
 
+M.delete_log = function()
+	-- Delete log file... prob will only get called manually
+	os.remove(session_time_file)
+end
+
 -- write to file on end of session
 vim.api.nvim_create_autocmd({ "VimLeave" }, { command = [[lua require("timewasted").write_log()]] })
 

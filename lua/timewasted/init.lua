@@ -3,7 +3,7 @@ local M = {}
 -- File path to store the session time
 local session_time_file = vim.fn.stdpath("data") .. "/timewasted"
 local TIME_FMT = "Time Wasted Configuring: %01dd %01dh %01dm %01ds"
-local AUTOSAVE_DELAY = 60
+local AUTOSAVE_DELAY = 30
 
 local start_time = os.time()
 
@@ -59,20 +59,18 @@ end
 -- read the logged time
 function M.read_log()
 	local f = io.open(session_time_file, "r")
+	local res = { time = 0, lastsave = 0 }
+
 	if f then
 		local content = f:read("*all")
 		f:close()
 
 		local csv_iter = content:gmatch("[^,]+")
-		local values = {
-			time = tonumber(csv_iter()),
-			lastsave = tonumber(csv_iter()),
-		}
-
-		return values
-	else
-		return { time = 0, lastsave = 0 }
+		res.time = tonumber(csv_iter())
+		res.lastsave = tonumber(csv_iter())
 	end
+
+	return res
 end
 
 M.delete_log = function()

@@ -2,22 +2,48 @@ local M = {}
 
 -- File path to store the session time
 local session_time_file = vim.fn.stdpath("data") .. "/timewasted"
-local TIME_FMT = "Time Wasted Configuring: %01dd %01dh %01dm %01ds"
 local AUTOSAVE_DELAY = 30
 
 local start_time = os.time()
 
 M.get_fmt = function()
-	return M.fmt_time(M.get_time())
+	return M.time_formatter(M.get_time())
 end
 
-M.fmt_time = function(total_sec)
+-- customize this
+M.time_formatter = function(total_sec)
+	local time_str = M.dhms_fmt(total_sec)
+	return string.format("Time Wasted Configuring: %s", time_str)
+end
+
+function M.dhms_fmt(total_sec)
+	local days, hours, minutes, seconds = unpack(M.dhms(total_sec))
+
+	local res = ""
+
+	if days > 0 then
+		res = days .. "d "
+	end
+	if hours > 0 then
+		res = res .. hours .. "h "
+	end
+	if minutes > 0 then
+		res = res .. minutes .. "m "
+	end
+	if seconds > 0 then
+		res = res .. seconds .. "s "
+	end
+
+	return res
+end
+
+function M.dhms(total_sec)
 	local days = math.floor(total_sec / 86400)
 	local hours = math.floor((total_sec % 86400) / 3600)
 	local minutes = math.floor((total_sec % 3600) / 60)
 	local seconds = total_sec % 60
 
-	return string.format(TIME_FMT, days, hours, minutes, seconds)
+	return { days, hours, minutes, seconds }
 end
 
 function M.get_time()

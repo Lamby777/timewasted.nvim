@@ -51,8 +51,15 @@ function M.read_log()
 	end
 end
 
--- create open/close autocmds
--- vim.api.nvim_create_autocmd({ "VimEnter" }, { command = [[lua require("timewasted").load_time()]] })
-vim.api.nvim_create_autocmd({ "VimLeave" }, { command = [[lua require("timewasted").write_time()]] })
+-- write to file on end of session
+vim.api.nvim_create_autocmd({ "VimLeave" }, { command = [[lua require("timewasted").write_log()]] })
+
+-- enable autosave if not nil
+if AUTOSAVE_DELAY ~= nil then
+	local delay_ms = AUTOSAVE_DELAY * 1000
+
+	local autosave_timer = vim.loop.new_timer()
+	autosave_timer:start(delay_ms, delay_ms, vim.schedule_wrap(M.write_log))
+end
 
 return M

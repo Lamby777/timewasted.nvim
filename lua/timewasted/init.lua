@@ -5,8 +5,7 @@ local session_time_file = vim.fn.stdpath("data") .. "/timewasted"
 local TIME_FMT = "%01dd %01dh %01dm %01ds"
 local AUTOSAVE_DELAY = 60
 
--- last time file was saved or vim was opened
-M.last_touch = os.time()
+M.start_time = os.time()
 
 M.fmt_time = function(total_sec)
 	local days = math.floor(total_sec / 86400)
@@ -17,28 +16,36 @@ M.fmt_time = function(total_sec)
 	return string.format(TIME_FMT, days, hours, minutes, seconds)
 end
 
-function M.save_session_time()
+-- write the logged time and reset the start time
+function M.write_time()
 	local current_time = os.time()
-	local elapsed_seconds = current_time - M.last_touch
+	local elapsed_seconds = current_time - M.start_time
+	local new_total = M.read_time() + elapsed_seconds
 
 	local f = io.open(session_time_file, "w")
 	if f then
-		f:write(tostring(elapsed_seconds))
+		f:write(tostring(new_total))
 		f:close()
+		M.start_time = current_time
+	else
+		error("Unable to write time to file: " .. session_time_file)
 	end
 end
 
-function M.load_session_time()
+-- read the logged time
+function M.read_time()
 	local f = io.open(session_time_file, "r")
 	if f then
-		local elapsed_seconds = tonumber(f:read("*a")) or 0
+		local logged = tonumber(f:read("*a")) or 0
 		f:close()
-		M.last_touch = os.time() - elapsed_seconds
+		return logged
+	else
+		return 0
 	end
 end
 
 -- create open/close autocmds
-vim.api.nvim_create_autocmd("VimEnter", "*", [[lua require("timewasted").load_session_time()]])
-vim.api.nvim_create_autocmd("VimLeave", "*", [[lua require("timewasted").save_session_time()]])
+vim.api.nvim_create_autocmd("VimEnter", "*", [[lua require("timewasted").load_time()]])
+vim.api.nvim_create_autocmd("VimLeave", "*", [[lua require("timewasted").write_time()]])
 
 return M

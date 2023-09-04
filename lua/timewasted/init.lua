@@ -4,6 +4,7 @@ local M = {}
 local session_time_file = vim.fn.stdpath("data") .. "/timewasted"
 local TIME_FMT = "Time Wasted Configuring: %01dd %01dh %01dm %01ds"
 local AUTOSAVE_DELAY = 60
+
 local start_time = os.time()
 
 M.get_fmt = function()
@@ -20,19 +21,35 @@ M.fmt_time = function(total_sec)
 end
 
 function M.get_time()
-	return M.read_log() + (os.time() - start_time)
+	-- we don't care if the time is written by another
+	-- process... it might even be more accurate (I think)
+	return M.read_log().time + (os.time() - start_time)
 end
 
 -- write the logged time and reset the start time
 function M.write_log()
+	local log = M.read_log()
+
+	-- if the last write time is newer than the one we're
+	-- keeping track of, chances are there's another nvim
+	-- instance running... Oh, boy! Concurrency!
+	if log.lastsave > start_time then
+		-- yep, this part is probably gonna introduce some
+		-- bugs, but in favor of keeping this commit brief,
+		-- i'll fix that next.
+		return
+	end
+
 	local current_time = os.time()
 	local elapsed_seconds = current_time - start_time
-	local new_total = M.read_log() + elapsed_seconds
+	local new_total = log.time + elapsed_seconds
 
 	local f = io.open(session_time_file, "w")
 	if f then
-		f:write(tostring(new_total))
+		local newlog = string.format("%d,%d", new_total, current_time)
+		f:write(newlog)
 		f:close()
+
 		start_time = current_time
 	else
 		error("Unable to write time to file: " .. session_time_file)
@@ -43,11 +60,18 @@ end
 function M.read_log()
 	local f = io.open(session_time_file, "r")
 	if f then
-		local logged = tonumber(f:read("*a")) or 0
+		local content = f:read("*all")
 		f:close()
-		return logged
+
+		local csv_iter = content:gmatch("[^,]+")
+		local values = {
+			time = tonumber(csv_iter()),
+			lastsave = tonumber(csv_iter()),
+		}
+
+		return values
 	else
-		return 0
+		return { time = 0, lastsave = 0 }
 	end
 end
 

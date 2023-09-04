@@ -2,7 +2,7 @@ local M = {}
 
 -- File path to store the session time
 local session_time_file = vim.fn.stdpath("data") .. "/timewasted"
-local AUTOSAVE_DELAY = 30
+local autosave_delay = 30
 
 local start_time = os.time()
 
@@ -107,12 +107,23 @@ end
 -- write to file on end of session
 vim.api.nvim_create_autocmd({ "VimLeave" }, { command = [[lua require("timewasted").write_log()]] })
 
--- enable autosave if not nil
-if AUTOSAVE_DELAY ~= nil then
-	local delay_ms = AUTOSAVE_DELAY * 1000
+-- enable autosave if not 0 or negative
+if autosave_delay > 0 then
+	local delay_ms = autosave_delay * 1000
 
 	local autosave_timer = vim.loop.new_timer()
 	autosave_timer:start(delay_ms, delay_ms, vim.schedule_wrap(M.write_log))
+end
+
+M.setup = function(opts)
+	if opts then
+		if opts.autosave_delay ~= nil then
+			autosave_delay = opts.autosave_delay
+		end
+		if opts.time_formatter ~= nil then
+			M.time_formatter = opts.time_formatter
+		end
+	end
 end
 
 return M

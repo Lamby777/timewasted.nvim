@@ -70,7 +70,7 @@ function M.write_log()
 	local elapsed_seconds = current_time - start_time
 	local new_total = log.time + elapsed_seconds
 
-	if log.lastsave > new_total then
+	if log.time > new_total then
 		-- time can't go backwards!
 		return
 	end

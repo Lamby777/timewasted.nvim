@@ -2,7 +2,7 @@
 
 Recreating the "Time Wasted Debugging:" stopwatch from x64dbg as a Neovim plugin
 
-![](https://i.ibb.co/SQpH3nQ/image.png)
+![](https://i.ibb.co/vks1GSP/image.png)
 
 ![](https://pbs.twimg.com/media/C06oAZNXcAArLPA.jpg)
 
